@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { ScheduleParser, faculty } from "./scheduleParser/parser.js";
 import { Monday } from "./utils/monday.js";
 import {readFile} from 'node:fs/promises';
+import 'dotenv/config'
 
 // для чего скрипт? для ручного импорта файла
 

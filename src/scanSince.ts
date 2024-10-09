@@ -3,10 +3,11 @@ import { Processor } from "./scheduleParser/processor.js";
 import { Spider, fileInfo } from "./scheduleParser/spider.js";
 import { Monday } from "./utils/monday.js";
 import {writeFile} from 'node:fs/promises';
+import 'dotenv/config'
 
 // для чего скрипт? для импорта всего доступного расписания, начиная с указанной даты
 
-const list = await Spider.fetchUpdates(new Monday('2023-09-01'));
+const list = await Spider.fetchUpdates(new Monday(process.argv[2]));
 
 let res = new Map<string, [fileInfo, unknown][]>();
 const addRes = (name: string, file: fileInfo, addInfo: unknown) => {
