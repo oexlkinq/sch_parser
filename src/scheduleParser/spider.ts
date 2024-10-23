@@ -8,33 +8,43 @@ export type fileInfo = {
     faculty?: faculty,
     date: Monday,
 }
+/** класс, объединяющий логику получения данных о расписании с сайта */
 export class Spider{
+    /** возвращает обработанную информацию о файлах расписания, полученную от future.md5.php */
     static async fetchUpdates(startDate?: Monday): Promise<fileInfo[]>{
         startDate = startDate ?? new Monday();
 
-        const url = new URL(this.futureApiLink);
+        const url = new URL(this.futureApiURL);
         url.search = startDate.date.toLocaleDateString('ru');
 
         const resp = await fetch(url);
         const rawList = await resp.json() as string[];
 
-        return rawList.map(v => {
-            const [rawHash, rawLink] = v.split('  ');
-            const {link, faculty, date} = this.getFileInfo(rawLink);
+        let updates: Array<fileInfo> = []
+        for (const item of rawList) {
+            const [rawHash, rawLink] = item.split('  ')
 
-            const hash = (rawHash === '-') ? undefined : rawHash;
+            if (!rawLink.match(/\.xlsx?$/)) {
+                continue
+            }
 
-            return {
+            const {link, faculty, date} = this.getFileInfo(rawLink)
+            const hash = (rawHash === '-') ? undefined : rawHash
+
+            updates.push({
                 hash,
                 link,
                 faculty,
                 date,
-            };
-        });
+            })
+        }
+        
+        return updates
     }
 
-    static futureApiLink = 'http://shgpi.edu.ru/fileadmin/future.md5.php';
+    static futureApiURL = 'http://shgpi.edu.ru/fileadmin/future.md5.php';
 
+    /** определяет свойства файла расписания по пути к файлу из future.md5.php */
     static getFileInfo(rawLink: string){
         const middlePath = rawLink.split('/').slice(0,3).join('/');
         const faculty = this.facsByMiddlePathMap.get(middlePath);
@@ -52,9 +62,10 @@ export class Spider{
         };
     }
 
-    static async fetchSchedule(faculty: faculty, monday: Monday){
+    /** пытается скачать файл расписания, соответствующий указанным параметрам */
+    static async fetchSchedule(faculty: faculty, date: Monday){
         let resp: Response;
-        const links = Spider.makePaths(monday, faculty);
+        const links = Spider.makePaths(date, faculty);
         for(let i = 0; i < 2; i++){
             const link = links[i];
             
@@ -64,6 +75,7 @@ export class Spider{
                     if(i === 0){
                         continue;
                     }
+
                     throw new UnavailableError('расписание недоступно');
                 }else{
                     console.error(resp);
@@ -77,18 +89,18 @@ export class Spider{
         return resp.arrayBuffer();
     }
 
-    static makePaths(monday: Monday, faculty: faculty){
-        const encodedDate = Spider.encodeDate(monday);
+    static makePaths(date: Monday, faculty: faculty){
+        const encodedDate = Spider.encodeDate(date);
         const noxLink = `http://shgpi.edu.ru/fileadmin/${Spider.middlePathByFacsMap.get(faculty)}/${encodedDate}/${encodedDate}.xls`;
 
         return [noxLink, noxLink + 'x'];
     }
 
-    static encodeDate(monday: Monday){
-        let sunday = new Date(monday.date);
-        sunday.setDate(monday.date.getDate() + 6);
+    static encodeDate(date: Monday){
+        let sunday = new Date(date.date);
+        sunday.setDate(date.date.getDate() + 6);
 
-        return monday.date.toLocaleDateString().replaceAll('.', '_')
+        return date.date.toLocaleDateString().replaceAll('.', '_')
             + '_'
             + sunday.toLocaleDateString().replaceAll('.', '_');
     }
