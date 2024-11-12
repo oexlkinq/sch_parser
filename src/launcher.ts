@@ -10,7 +10,7 @@ let doInit = process.argv.includes('init');
 if(doInit){
     console.log('updateTeachers...');
     
-    await updateTeachers('eost.json');
+    await updateTeachers();
 
     console.log('init updateTeachers done');
 }
@@ -18,7 +18,7 @@ let textParser = await PairTextParser.makeParser();
 // разбор информации о преподавателях
 // каждый день в 1:20
 scheduleJob('20 1 * * *', async () => {
-    await updateTeachers('eost.json');
+    await updateTeachers();
     textParser = await PairTextParser.makeParser();
 });
 

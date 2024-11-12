@@ -1,33 +1,16 @@
-import { readFile } from 'node:fs/promises';
 import { TeachersUtils } from '../db.js';
+import { EduBaseApi } from 'node-edubase-api';
 
-type rawTeacher = {
-    ID: string;
-    peoplename: string;
-    ruledAcademicGroups: string;
-    eoslogin: string;
-    roles: string;
-    email: string;
-    orgunitname: string;
-    jobtypename: string;
-    instaff: string;
-    status: string;
-    creator: string;
-    creatorTS: string;
-    updator: string;
-    updatorTS: string;
-    url: string;
-};
+const eb = new EduBaseApi(process.env.EDUBASEAPI_TOKEN)
 
-export async function updateTeachers(path: string) {
-    const rawjson = await readFile(path, 'utf-8');
-    const rawTeachers = JSON.parse(rawjson) as rawTeacher[];
+export async function updateTeachers() {
+    const rawTeachers = await eb.api.getinfo.employee('*', { sitesearch: true })
 
-    const teachers = rawTeachers.map((teacher) => ({
-        id: +teacher.ID,
-        name: teacher.peoplename,
-        url: teacher.url,
-    }));
+    const teachers = rawTeachers.employee.filter(item => item.blocked === '0').map(item => ({
+        login: item.login,
+        name: item.fio,
+        url: item.url,
+    }))
     
     await TeachersUtils.importFromJson(JSON.stringify(teachers));
 }

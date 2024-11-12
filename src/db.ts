@@ -73,8 +73,8 @@ export class TeachersUtils {
     static async importFromJson(json: string) {
         await Utils.doTransaction(async () => {
             await client.query('create temp table newteachers on commit drop as select (jsonb_populate_record(null::teachers, value)).* from jsonb_array_elements($1)', [json]);
-            await client.query(`delete from teachers using teachers t left join newteachers as nt on nt.id = t.id where nt.id is null;
-insert into teachers(id, name, url) select nt.id, nt.name, nt.url from teachers t right join newteachers as nt on nt.id = t.id where t.id is null;`);
+            await client.query(`delete from teachers using teachers t left join newteachers as nt on nt.login = t.login where nt.login is null;
+insert into teachers(name, url, login) select nt.name, nt.url, nt.login from teachers t right join newteachers as nt on nt.login = t.login where t.login is null;`);
         });
     }
 }
