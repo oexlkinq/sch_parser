@@ -42,7 +42,8 @@ export class Spider{
         return updates
     }
 
-    static futureApiURL = 'http://shgpi.edu.ru/fileadmin/future.md5.php';
+    static baseURL = 'http://shspu.ru/fileadmin/'
+    static futureApiURL = Spider.baseURL + 'future.md5.php';
 
     /** определяет свойства файла расписания по пути к файлу из future.md5.php */
     static getFileInfo(rawLink: string){
@@ -53,7 +54,7 @@ export class Spider{
         const [d, m, y] = dateRange.split('_');
         const date = new Monday(Date.UTC(+y, +m - 1, +d, 0, 0, 0, 0));
 
-        const link = 'http://shgpi.edu.ru/fileadmin/' + rawLink;
+        const link = Spider.baseURL + rawLink;
 
         return {
             link,
@@ -91,7 +92,7 @@ export class Spider{
 
     static makePaths(date: Monday, faculty: faculty){
         const encodedDate = Spider.encodeDate(date);
-        const noxLink = `http://shgpi.edu.ru/fileadmin/${Spider.middlePathByFacsMap.get(faculty)}/${encodedDate}/${encodedDate}.xls`;
+        const noxLink = `${Spider.baseURL}${Spider.middlePathByFacsMap.get(faculty)}/${encodedDate}/${encodedDate}.xls`;
 
         return [noxLink, noxLink + 'x'];
     }
