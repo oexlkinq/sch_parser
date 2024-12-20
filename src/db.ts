@@ -74,8 +74,22 @@ export class TeachersUtils {
         await Utils.doTransaction(async () => {
             // TODO: вместо двух join можно использовать один full join в котором выбрать оба типа исключительных случаев. вероятно, последующие сканирования маленькой таблицы только с изменениями в delete и insert обойдутся дешевле
             await client.query('create temp table newteachers on commit drop as select (jsonb_populate_record(null::teachers, value)).* from jsonb_array_elements($1)', [json]);
-            await client.query(`delete from teachers as src using teachers as t left join newteachers as nt on nt.login = t.login where src.login = t.login and nt.login is null;
-insert into teachers(name, url, login) select nt.name, nt.url, nt.login from teachers t right join newteachers as nt on nt.login = t.login where t.login is null;`);
+            await client.query(`
+                delete from teachers as src
+                using teachers as t
+                left join newteachers as nt on nt.login = t.login
+                where src.login = t.login and nt.login is null;
+
+                update teachers t
+                set name = nt.name, url = nt.url
+                from newteachers nt where t.login = nt.login;
+
+                insert into teachers(name, url, login)
+                select nt.name, nt.url, nt.login
+                from teachers t
+                right join newteachers as nt on nt.login = t.login
+                where t.login is null;
+            `);
         });
     }
 }
