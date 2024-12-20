@@ -5,7 +5,7 @@ import { fileInfo } from "./spider.js";
 import { ScheduleParser, faculty } from "./parser.js";
 
 export class Processor {
-    static async process(fileInfo: fileInfo, textParser: textParser) {
+    static async process(fileInfo: fileInfo, textParser: textParser, force = false) {
         if (!fileInfo.faculty) {
             return;
         }
@@ -26,7 +26,7 @@ export class Processor {
 
 
         const oldInsertion = await ScheduleUtils.getInsertion(fileInfo.date, fileInfo.faculty);
-        if (oldInsertion && oldInsertion.hash === fileInfo.hash) {
+        if (!force && oldInsertion && oldInsertion.hash === fileInfo.hash) {
             return;
         }
 
